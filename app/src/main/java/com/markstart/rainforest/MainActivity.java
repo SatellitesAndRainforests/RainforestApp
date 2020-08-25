@@ -1,5 +1,6 @@
 package com.markstart.rainforest;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
@@ -11,43 +12,79 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.markstart.rainforest.client.TrackClient;
+import com.markstart.rainforest.model.Point;
+import com.markstart.rainforest.model.Track;
+import com.markstart.rainforest.dataStorage.DataStorageEngine;
 
+import org.json.JSONException;
+
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.UUID;
+
+import static com.markstart.rainforest.client.TrackClient.sendTrackingDataToServer;
+// import static com.markstart.rainforest.dataStorage.DataStorageEngine.getAllTracksFromDisk;
+import static com.markstart.rainforest.dataStorage.TrackFileNameCreator.createFileName;
 
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
-    private SensorManager mSensorManager;
-    private Sensor mSensorHumidity;
-    private Sensor mSensorTemperature;
-    private TextView mTextSensorHumidity;
-    private TextView mTextSensorTemperature;
-
-    private Button mStartButton;
-    private Button mStopButton;
-    private TextView mLocationTextView;
-    private Location mLastLocation;
 
     private static final int REQUEST_LOCATION_PERMISSION = 1;
 
-    private FusedLocationProviderClient mFusedLocationClient;
-
-    private ImageView mAndroidImageViewTracking;
-
     private boolean mTracking = false;
+
+    boolean gotSensorReadings;
+    boolean gotHumidityReading;
+    boolean gotTemperatureReading;
+
+    String tempFilename;
+
+    float currentHumidity;
+    float currentTemperature;
+
+    private Track track;
+
+    private Context context = this;
+
+    private SensorManager mSensorManager;
+    private FusedLocationProviderClient mFusedLocationClient;
 
     private LocationCallback mLocationCallback;
 
+    private Sensor mSensorHumidity;
+    private Sensor mSensorTemperature;
+
+    private Location mLastLocation;
+
+    private TextView mSensorHumidityTextView;
+    private TextView mSensorTemperatureTextView;
+    private TextView mLocationTextView;
+    private TextView mSensorListTextView;
+
+    private Button mSendDataButton;
+    private Button mStartButton;
+    private Button mStopButton;
+    private Button mDeleteButton;
+
+    private ImageView mAndroidImageViewTracking;
+
+    DataStorageEngine dse;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,22 +92,25 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         setContentView(R.layout.activity_main);
 
 
-        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        mTextSensorHumidity = (TextView) findViewById(R.id.humidity_sensor_text);
-        mTextSensorTemperature = (TextView) findViewById(R.id.temperature_sensor_text);
-        // for gps --------------------------------------------------
-        mLocationTextView = (TextView) findViewById(R.id.location_text);
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-        // all needed for changing tracking image ?
-        mAndroidImageViewTracking = (ImageView) findViewById(R.id.tracking_image);
-        // returns null if no Object instance.
+        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+
         mSensorHumidity = mSensorManager.getDefaultSensor(Sensor.TYPE_RELATIVE_HUMIDITY);
         mSensorTemperature = mSensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
+
+        mSensorHumidityTextView = (TextView) findViewById(R.id.humidity_sensor_text);
+        mSensorTemperatureTextView = (TextView) findViewById(R.id.temperature_sensor_text);
+        mLocationTextView = (TextView) findViewById(R.id.location_text);
+        mSensorListTextView = (TextView) findViewById(R.id.sensor_list);
+
         mStartButton = (Button) findViewById(R.id.startButton);
         mStopButton = (Button) findViewById(R.id.stopButton);
+        mSendDataButton = (Button) findViewById(R.id.sendButton);
+        mDeleteButton = (Button) findViewById(R.id.deleteButton);
 
+        mAndroidImageViewTracking = (ImageView) findViewById(R.id.tracking_image);
 
-
+        dse = new DataStorageEngine();
 
         mStartButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -82,10 +122,40 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         });
 
         mStopButton.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public void onClick(View view) {
                 mTracking = false;
                 stopTracking();
+            }
+        });
+
+        mDeleteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                dse.deleteAllTracks(context);
+            }
+        });
+
+
+        mSendDataButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                ArrayList<Track> tracks = dse.getAllTracksFromDisk(context);
+
+                for (Track track: tracks
+                     ) {
+                    mSensorListTextView.append(track.getTrack_id().toString() + '\n');
+                    try {
+                        sendTrackingDataToServer(tracks);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                        Log.d("could not send", "json to server");
+                    }
+                    // delete data ..
+               }
+                mSendDataButton.setEnabled(false);
             }
         });
 
@@ -100,22 +170,90 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                                 mLastLocation.getLatitude(),
                                 mLastLocation.getLongitude(),
                                 mLastLocation.getTime()));
+
+                Log.d("locationCallback", " before get sensors");
+                getSensorDataThread thread = new getSensorDataThread();
+                thread.start();
+
+                track.getPoints().add(makePoint());
+
             }
         };
     }
 
+    private Point makePoint() {
+        Point point;
+
+        point = new Point(
+                UUID.randomUUID(),
+                track.getTrack_id(),
+                (float) mLastLocation.getLatitude(),
+                (float) mLastLocation.getLongitude(),
+                new Timestamp(mLastLocation.getTime()),
+                currentHumidity,
+                currentTemperature);
+
+        return point;
+    }
+
 
     private void tracking() {
+        track = new Track();
         startTrackingLocation();
-        startSensors();
         toggleUI();
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     private void stopTracking() {
         stopTrackingLocation();
-        stopSensors();
+        String fileName = createFileName(track);
+        tempFilename = fileName;
+
+        boolean saved = dse.saveTrackToFile( context, track, fileName);
+        if (saved) {
+            Toast.makeText(this, " Data saved to " + getFilesDir() + "/" + fileName, Toast.LENGTH_LONG).show();
+
+        } else {
+         Toast.makeText(this, " Could not save data to disk", Toast.LENGTH_SHORT).show();
+        }
         toggleUI();
+
+     //   Track t = getTrackFromFile(context, fileName);
+     //   boolean fileISNull = (t == null);
+     //   Log.d("fileIsNull" + fileISNull,"");
+     //   mSensorListTextView.append(getTrackFromFile(context, fileName).getPoints().get(0).getJSONObject().toString());
+
     }
+
+
+
+    class getSensorDataThread extends Thread {
+
+        public getSensorDataThread() {
+            gotHumidityReading = false;
+            gotTemperatureReading = false;
+            gotSensorReadings = false;
+        }
+
+        @Override
+        public void run() {
+
+                startSensors();
+
+                while (gotSensorReadings == false) {
+                    if (gotTemperatureReading && gotHumidityReading) {
+                        gotSensorReadings = true;
+                    }
+                }
+
+                stopSensors();
+                Log.d("UI THREAD","end");
+                return;
+            }
+        }
+
+
+
 
 
     private void toggleUI() {
@@ -127,6 +265,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             mStartButton.setText("Start Tracking");
             mStartButton.setEnabled(true);
             mStopButton.setEnabled(false);
+            mSendDataButton.setEnabled(true);
         }
     }
 
@@ -134,13 +273,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         if (mSensorHumidity != null) {
             mSensorManager.registerListener(this, mSensorHumidity, SensorManager.SENSOR_DELAY_NORMAL);
         } else {
-            mTextSensorHumidity.setText("sensor_error");
+            mSensorHumidityTextView.setText("sensor_error");
+
         }
 
         if (mSensorTemperature != null) {
             mSensorManager.registerListener(this, mSensorTemperature, SensorManager.SENSOR_DELAY_NORMAL);
         } else {
-            mTextSensorTemperature.setText("sensor_error");
+            mSensorTemperatureTextView.setText("sensor_error");
         }
 
     }
@@ -149,6 +289,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mSensorManager.unregisterListener(this);
     }
 
+
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         int sensorType = sensorEvent.sensor.getType();
@@ -156,12 +297,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         switch (sensorType) {
             case Sensor.TYPE_RELATIVE_HUMIDITY:
-                mTextSensorHumidity.setText(getResources().getString(
+                mSensorHumidityTextView.setText(getResources().getString(
                         R.string.humidity_sensor_text, currentValue));
+                gotHumidityReading = true;
+                currentHumidity = currentValue;
+
                 break;
             case Sensor.TYPE_AMBIENT_TEMPERATURE:
-                mTextSensorTemperature.setText(getResources().getString(
+                mSensorTemperatureTextView.setText(getResources().getString(
                         R.string.temperature_sensor_text, currentValue));
+                gotTemperatureReading = true;
+                currentTemperature = currentValue;
                 break;
             default:
         }
@@ -242,8 +388,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
 
 */
-
-
 
 
     // leave empty if not implementing. Needed because implementing interface.
