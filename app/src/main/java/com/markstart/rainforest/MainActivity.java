@@ -26,19 +26,15 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
-import com.markstart.rainforest.client.TrackClient;
 import com.markstart.rainforest.model.Point;
 import com.markstart.rainforest.model.Track;
 import com.markstart.rainforest.dataStorage.DataStorageEngine;
-
-import org.json.JSONException;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.UUID;
 
-import static com.markstart.rainforest.client.TrackClient.sendTrackingDataToServer;
-// import static com.markstart.rainforest.dataStorage.DataStorageEngine.getAllTracksFromDisk;
+import static com.markstart.rainforest.client.TrackClient.sendJson;
 import static com.markstart.rainforest.dataStorage.TrackFileNameCreator.createFileName;
 
 
@@ -147,15 +143,22 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 for (Track track: tracks
                      ) {
                     mSensorListTextView.append(track.getTrack_id().toString() + '\n');
-                    try {
-                        sendTrackingDataToServer(tracks);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                        Log.d("could not send", "json to server");
-                    }
+                    sendJson(tracks);
                     // delete data ..
                }
                 mSendDataButton.setEnabled(false);
+
+
+
+
+
+
+
+
+
+
+
+
             }
         });
 
@@ -175,7 +178,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 getSensorDataThread thread = new getSensorDataThread();
                 thread.start();
 
-                track.getPoints().add(makePoint());
+                track.getTrack_points().add(makePoint());
 
             }
         };

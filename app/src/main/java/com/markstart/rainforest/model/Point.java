@@ -36,7 +36,7 @@ public class Point implements Serializable {
             obj.put("track_id", track_id );
             obj.put("gps_latitude", gps_latitude );
             obj.put("gps_longitude", gps_longitude );
-            obj.put("point_timestamp", point_timestamp );
+            obj.put("point_timestamp",point_timestamp );
             obj.put("point_humidity", point_humidity );
             obj.put("point_temperature", point_temperature );
         } catch (JSONException e) {
@@ -44,6 +44,14 @@ public class Point implements Serializable {
         }
         return obj;
     }
+
+    public String getJsonTimestamp() {
+        String extendedTime = point_timestamp.toString() + "+00:00";
+        String converted = extendedTime.replace(' ', 'T');
+
+        return converted;
+    }
+
 
 
     public UUID getPoint_id() {
