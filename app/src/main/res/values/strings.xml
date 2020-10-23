@@ -1,9 +1,10 @@
 <resources>
-    <string name="app_name">Rainforest</string>
+    <string name="app_name">Rainforest Sensor Data Tracking</string>
     <string name="error_no_sensor">No sensor</string>
-    <string name="humidity_sensor_text">"Humidity Sensor: %1$.2f "</string>
-    <string name="temperature_sensor_text">"Temperature Sensor: %1$.2f "</string>
-    <string name="location_text">"Latitude: %1.5f \n Longitude: %2$.5f \n Timestamp: %3$tr"</string>
+    <string name="humidity_sensor_text">"\n  Humidity %1$.2f"</string>
+    <string name="temperature_sensor_text">" %1$.0f°C "</string>
+    <string name="location_text">" %1.5f, %2$.5f\n %3$tr\n"</string>
     <string name="no_location">no_location</string>
     <string name="start_tracking">Start Tracking</string>
+    <string name="no_connection">Could not send Files to server !</string>
 </resources>

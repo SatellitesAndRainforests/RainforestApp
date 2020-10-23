@@ -1,6 +1,13 @@
 package com.markstart.rainforest.model;
 
 
+import android.Manifest;
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.location.LocationManager;
+
+import androidx.core.app.ActivityCompat;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +25,9 @@ public class Track implements Serializable {
         this.track_id = UUID.randomUUID();
         track_points = new ArrayList<Point>();
     }
+
+
+
 
     public UUID getTrack_id() {
         return track_id;

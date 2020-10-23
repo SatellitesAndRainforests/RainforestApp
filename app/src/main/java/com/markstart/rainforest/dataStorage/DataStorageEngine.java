@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 
@@ -86,10 +87,16 @@ public class DataStorageEngine {
 
 
     public void deleteAllTracks( Context context ) {
-       String [] fileList = allFilesList( context );
-        for (String file : fileList ) {
-            File f = new File( tracksDirectory + File.separator + file);
-            f.delete();
+        String[] fileList = allFilesList(context);
+        Boolean deletedFiles = false;
+        for (String file : fileList) {
+            File f = new File(tracksDirectory + File.separator + file);
+            deletedFiles = f.delete();
+        }
+        if (!deletedFiles) {
+            Toast.makeText(context, " There are no files to delete. ", Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(context, " Files Deleted ", Toast.LENGTH_LONG).show();
         }
     }
 

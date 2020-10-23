@@ -1,11 +1,13 @@
 package com.markstart.rainforest;
 
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -34,8 +36,12 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.UUID;
 
-import static com.markstart.rainforest.client.TrackClient.sendJson;
+import static com.markstart.rainforest.client.TrackClient.sendJsonPoint;
 import static com.markstart.rainforest.dataStorage.TrackFileNameCreator.createFileName;
+
+
+// any interface is better than no interface !!
+// any archetecture decisions are  better than none !
 
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
@@ -72,6 +78,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private TextView mSensorTemperatureTextView;
     private TextView mLocationTextView;
     private TextView mSensorListTextView;
+    private static TextView mMessageTextView;
 
     private Button mSendDataButton;
     private Button mStartButton;
@@ -81,6 +88,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private ImageView mAndroidImageViewTracking;
 
     DataStorageEngine dse;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,7 +105,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mSensorHumidityTextView = (TextView) findViewById(R.id.humidity_sensor_text);
         mSensorTemperatureTextView = (TextView) findViewById(R.id.temperature_sensor_text);
         mLocationTextView = (TextView) findViewById(R.id.location_text);
-        mSensorListTextView = (TextView) findViewById(R.id.sensor_list);
+       // mSensorListTextView = (TextView) findViewById(R.id.sensor_list);
+        mMessageTextView = (TextView) findViewById(R.id.message_text);
 
         mStartButton = (Button) findViewById(R.id.startButton);
         mStopButton = (Button) findViewById(R.id.stopButton);
@@ -113,6 +122,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             public void onClick(View view) {
                 mTracking = true;
                 tracking();
+                mMessageTextView.setText("");
             }
 
         });
@@ -129,34 +139,48 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mDeleteButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                dse.deleteAllTracks(context);
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                builder.setTitle("Delete all files : They can't be recovered.");
+                builder.setMessage("Are you sure ?");
+                builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dse.deleteAllTracks(context);
+                    }
+                });
+
+                builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                    }
+                });
+
+                AlertDialog dialog = builder.create();
+                dialog.show();
+
+
+
             }
         });
-
 
         mSendDataButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
+                Toast.makeText(context, " Connecting to server ... ... ... ", Toast.LENGTH_LONG).show();
+                mMessageTextView.setText("Connecting ...");
+
+
                 ArrayList<Track> tracks = dse.getAllTracksFromDisk(context);
 
-                for (Track track: tracks
-                     ) {
-                    mSensorListTextView.append(track.getTrack_id().toString() + '\n');
-                    sendJson(tracks);
-                    // delete data ..
-               }
-                mSendDataButton.setEnabled(false);
+                    for (Track track : tracks) {
+                        for (Point point : track.getTrack_points()) {
+                            sendJsonPoint(context, point);
+                        }
+                    }
 
-
-
-
-
-
-
-
-
-
+                //    mSendDataButton.setEnabled(false);
 
 
             }
@@ -183,6 +207,18 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
         };
     }
+
+
+
+
+    public static void messageHandler(Boolean sent) {
+        if (sent) {
+            mMessageTextView.setText("Data sent !");
+        } else {
+            mMessageTextView.setText("Data could not be sent");
+        }
+    }
+
 
     private Point makePoint() {
         Point point;
@@ -214,10 +250,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         boolean saved = dse.saveTrackToFile( context, track, fileName);
         if (saved) {
-            Toast.makeText(this, " Data saved to " + getFilesDir() + "/" + fileName, Toast.LENGTH_LONG).show();
+            Toast.makeText(this, " Tracking File Saved ", Toast.LENGTH_LONG).show();
 
         } else {
-         Toast.makeText(this, " Could not save data to disk", Toast.LENGTH_SHORT).show();
+         Toast.makeText(this, " Could not save file ", Toast.LENGTH_SHORT).show();
         }
         toggleUI();
 
@@ -264,11 +300,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             mStartButton.setText("Tracking ...");
             mStartButton.setEnabled(false);
             mStopButton.setEnabled(true);
+            Toast.makeText(this, " Tracking Started, Saving data every 15 mins ", Toast.LENGTH_LONG).show();
+
         } else {
             mStartButton.setText("Start Tracking");
             mStartButton.setEnabled(true);
             mStopButton.setEnabled(false);
-            mSendDataButton.setEnabled(true);
+        //    mSendDataButton.setEnabled(true);
+
         }
     }
 
@@ -318,13 +357,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
 
     private LocationRequest getLocationRequest() {
-        // 10000 = 10 seconds. set gps get requirments.
+        // 5000 = 5 seconds. set gps get requirments.
         LocationRequest locationRequest = new LocationRequest();
-        locationRequest.setInterval(5000); //900000);
-        locationRequest.setFastestInterval(2500);//600000);
+        locationRequest.setInterval(900000); //900000 is 15 mins );
+        locationRequest.setFastestInterval(900000);
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         return locationRequest;
     }
+
 
     private void startTrackingLocation() {
         // the comditional is automatically suggested by android studio but some of the code, changed to google tutorials code.
@@ -339,6 +379,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             mFusedLocationClient.requestLocationUpdates(getLocationRequest(), mLocationCallback, null);
         }
     }
+
 
     private void stopTrackingLocation() {
         mFusedLocationClient.removeLocationUpdates(mLocationCallback);
