@@ -1,4 +1,5 @@
 # RainforestApp
 Bsc Computing and Information Systems final project
 
-![Alt text](file:///home/witch/Desktop/project/screenShotFinal.png?raw=true "Title")
+![screenShotFinal](https://user-images.githubusercontent.com/45234288/97021748-24427e00-154b-11eb-89bb-d8354fa54aef.png)
+
