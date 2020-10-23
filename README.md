@@ -1,5 +1,6 @@
 # RainforestApp
 Bsc Computing and Information Systems final project
 
-![screenShotFinal](https://user-images.githubusercontent.com/45234288/97021748-24427e00-154b-11eb-89bb-d8354fa54aef.png)
+![screenshotFinal](https://user-images.githubusercontent.com/45234288/97022134-a92d9780-154b-11eb-9d09-c4456ef05c41.png)
+
 
