@@ -1,0 +1,211 @@
+Index: app/src/main/java/com/markstart/rainforest/dataStorage/DataStorageEngine.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.markstart.rainforest.dataStorage;\n\nimport android.content.Context;\nimport android.os.Build;\nimport android.os.Environment;\nimport android.util.Log;\nimport android.widget.Toast;\n\nimport androidx.annotation.RequiresApi;\n\nimport com.markstart.rainforest.model.Track;\n\nimport java.io.File;\nimport java.io.FileInputStream;\nimport java.io.FileNotFoundException;\nimport java.io.FileOutputStream;\nimport java.io.FileWriter;\nimport java.io.IOException;\nimport java.io.ObjectInputStream;\nimport java.io.ObjectOutputStream;\nimport java.util.ArrayList;\n\n\npublic class DataStorageEngine {\n\n    private File tracksDirectory;\n\n\n   public DataStorageEngine() {\n        tracksDirectory = new File(Environment.getExternalStorageDirectory() + File.separator + \"trackFiles\");\n\n        boolean folderThere = true;\n        if (!tracksDirectory.exists()) {\n            folderThere = tracksDirectory.mkdir();\n        } else {\n            Log.d(\"folder not created\", \"no no\");\n        }\n    }\n\n\n\n    public boolean saveTrackToFile(Context mcoContext, Track track, String fileName) {\n\n        boolean writeSuccessful = false;\n        FileOutputStream fs = null;\n\n        try {\n            fs = new FileOutputStream( new File(tracksDirectory + File.separator + fileName));\n            ObjectOutputStream oos = new ObjectOutputStream(fs);\n            oos.writeObject(track);\n            writeSuccessful = true;\n        } catch (FileNotFoundException e) {\n            e.printStackTrace();\n        } catch (IOException e) {\n            e.printStackTrace();\n        } finally {\n            if (fs != null) {\n                try {\n                    fs.close();\n                } catch (IOException e) {\n                    e.printStackTrace();\n                }\n            }\n        }\n        return writeSuccessful;\n    }\n\n    public Track getTrackFromFile(Context mcoContext, String fileName) {\n\n        Track track = null;\n        FileInputStream fs = null;\n\n        try {\n            fs = new FileInputStream(new File( tracksDirectory + File.separator + fileName));\n            ObjectInputStream ois = new ObjectInputStream(fs);\n            track = (Track) ois.readObject();\n            Log.d(\"read\", \"successful\");\n        } catch (FileNotFoundException e) {\n            e.printStackTrace();\n        } catch (IOException e) {\n            e.printStackTrace();\n        } catch (ClassNotFoundException e) {\n            e.printStackTrace();\n        }\n        return track;\n    }\n\n\n    public void deleteAllTracks( Context context ) {\n        String[] fileList = allFilesList(context);\n        Boolean deletedFiles = false;\n        for (String file : fileList) {\n            File f = new File(tracksDirectory + File.separator + file);\n            deletedFiles = f.delete();\n        }\n        if (!deletedFiles) {\n            Toast.makeText(context, \" There are no files to delete. \", Toast.LENGTH_LONG).show();\n        } else {\n            Toast.makeText(context, \" Files Deleted \", Toast.LENGTH_LONG).show();\n        }\n    }\n\n    public ArrayList<Track> getAllTracksFromDisk( Context context ) {\n\n        ArrayList<Track> tracks = new ArrayList<Track>();\n\n        String [] fileList = allFilesList( context );\n\n        for (String file: fileList ) {\n               tracks.add(getTrackFromFile( context, file));\n        }\n        return tracks;\n    }\n\n\n    public String [] allFilesList(Context mcoContext) {\n       File tracksDir = new File(String.valueOf(tracksDirectory));\n       String [] fileList = tracksDir.list();\n       return fileList;\n    }\n\n\n\n}\n\n\n\n\n\n\n\n\n\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/markstart/rainforest/dataStorage/DataStorageEngine.java	(revision 00015de6b40a066e8b552131a177b1b1adcc53fe)
++++ app/src/main/java/com/markstart/rainforest/dataStorage/DataStorageEngine.java	(date 1603724701000)
+@@ -1,71 +1,89 @@
+ package com.markstart.rainforest.dataStorage;
+ 
+-import android.content.Context;
+-import android.os.Build;
+-import android.os.Environment;
+-import android.util.Log;
+-import android.widget.Toast;
++        import android.content.Context;
++        import android.os.Environment;
++        import android.util.Log;
++        import android.widget.Toast;
+ 
+-import androidx.annotation.RequiresApi;
+-
+-import com.markstart.rainforest.model.Track;
++        import com.markstart.rainforest.model.Track;
+ 
+-import java.io.File;
+-import java.io.FileInputStream;
+-import java.io.FileNotFoundException;
+-import java.io.FileOutputStream;
+-import java.io.FileWriter;
+-import java.io.IOException;
+-import java.io.ObjectInputStream;
+-import java.io.ObjectOutputStream;
+-import java.util.ArrayList;
++        import java.io.File;
++        import java.io.FileInputStream;
++        import java.io.FileNotFoundException;
++        import java.io.FileOutputStream;
++        import java.io.IOException;
++        import java.io.ObjectInputStream;
++        import java.io.ObjectOutputStream;
++        import java.util.ArrayList;
+ 
+ 
+ public class DataStorageEngine {
+ 
+     private File tracksDirectory;
++    private Context dseContext;
++
+ 
++    public DataStorageEngine(Context context) {
+ 
+-   public DataStorageEngine() {
++        dseContext = context;
++
+         tracksDirectory = new File(Environment.getExternalStorageDirectory() + File.separator + "trackFiles");
+ 
+-        boolean folderThere = true;
+         if (!tracksDirectory.exists()) {
+-            folderThere = tracksDirectory.mkdir();
++            tracksDirectory.mkdir();
+         } else {
+-            Log.d("folder not created", "no no");
++            Log.d("DSE","DID NOT MAKE A FILE FOLDER *************");
+         }
++
+     }
+ 
+ 
+ 
+-    public boolean saveTrackToFile(Context mcoContext, Track track, String fileName) {
++    public boolean saveTrackToFile(Track track, String fileName) {
+ 
+         boolean writeSuccessful = false;
+         FileOutputStream fs = null;
+ 
+-        try {
+-            fs = new FileOutputStream( new File(tracksDirectory + File.separator + fileName));
+-            ObjectOutputStream oos = new ObjectOutputStream(fs);
+-            oos.writeObject(track);
+-            writeSuccessful = true;
+-        } catch (FileNotFoundException e) {
+-            e.printStackTrace();
+-        } catch (IOException e) {
+-            e.printStackTrace();
+-        } finally {
+-            if (fs != null) {
+-                try {
+-                    fs.close();
+-                } catch (IOException e) {
+-                    e.printStackTrace();
+-                }
+-            }
+-        }
+-        return writeSuccessful;
++        if (trackHasAtLeastOnePoint(track)) {
++
++            try {
++                fs = new FileOutputStream(new File(tracksDirectory + File.separator + fileName));
++                ObjectOutputStream oos = new ObjectOutputStream(fs);
++                oos.writeObject(track);
++                writeSuccessful = true;
++            } catch (FileNotFoundException e) {
++                e.printStackTrace();
++            } catch (IOException e) {
++                e.printStackTrace();
++            } finally {
++                if (fs != null) {
++                    try {
++                        fs.close();
++                    } catch (IOException e) {
++                        e.printStackTrace();
++                    }
++                }
++            }
++            return writeSuccessful;
++        } else {
++            return false;
++        }
++    }
++
++
++    private boolean trackHasAtLeastOnePoint(Track track) {
++
++        if (track.getTrackPoints().size() > 0) {
++            return true;
++        } else {
++            Toast.makeText(dseContext, " Track needs > 0 Data Points ", Toast.LENGTH_LONG).show();
++            return false;
++        }
++
+     }
+ 
+-    public Track getTrackFromFile(Context mcoContext, String fileName) {
++
++    public Track getTrackFromFile( String fileName) {
+ 
+         Track track = null;
+         FileInputStream fs = null;
+@@ -74,7 +92,6 @@
+             fs = new FileInputStream(new File( tracksDirectory + File.separator + fileName));
+             ObjectInputStream ois = new ObjectInputStream(fs);
+             track = (Track) ois.readObject();
+-            Log.d("read", "successful");
+         } catch (FileNotFoundException e) {
+             e.printStackTrace();
+         } catch (IOException e) {
+@@ -86,37 +103,43 @@
+     }
+ 
+ 
+-    public void deleteAllTracks( Context context ) {
+-        String[] fileList = allFilesList(context);
++    public void deleteAllTracks() {
++
+         Boolean deletedFiles = false;
++        String[] fileList = allFilesList();
++
+         for (String file : fileList) {
+             File f = new File(tracksDirectory + File.separator + file);
+             deletedFiles = f.delete();
+         }
++
+         if (!deletedFiles) {
+-            Toast.makeText(context, " There are no files to delete. ", Toast.LENGTH_LONG).show();
++            Toast.makeText(dseContext, " There are no files to delete. ", Toast.LENGTH_LONG).show();
+         } else {
+-            Toast.makeText(context, " Files Deleted ", Toast.LENGTH_LONG).show();
++            Toast.makeText(dseContext, " Files Deleted ", Toast.LENGTH_LONG).show();
+         }
++
+     }
+ 
+-    public ArrayList<Track> getAllTracksFromDisk( Context context ) {
+ 
+-        ArrayList<Track> tracks = new ArrayList<Track>();
++    public ArrayList<Track> getAllTracksFromDisk() {
+ 
+-        String [] fileList = allFilesList( context );
++        ArrayList<Track> tracks = new ArrayList<>();
++        String [] fileList = allFilesList();
+ 
+         for (String file: fileList ) {
+-               tracks.add(getTrackFromFile( context, file));
++            tracks.add(getTrackFromFile(file));
+         }
++
+         return tracks;
++
+     }
+ 
+ 
+-    public String [] allFilesList(Context mcoContext) {
+-       File tracksDir = new File(String.valueOf(tracksDirectory));
+-       String [] fileList = tracksDir.list();
+-       return fileList;
++    private String [] allFilesList() {
++        File tracksDir = new File(String.valueOf(tracksDirectory));
++        String [] fileList = tracksDir.list();
++        return fileList;
+     }
+ 
+ 
+@@ -129,5 +152,3 @@
+ 
+ 
+ 
+-
+-
