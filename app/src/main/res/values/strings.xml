@@ -6,5 +6,4 @@
     <string name="location_text">" %1.5f, %2$.5f\n %3$tr\n"</string>
     <string name="no_location">no_location</string>
     <string name="start_tracking">Start Tracking</string>
-    <string name="no_connection">Could not send Files to server !</string>
 </resources>

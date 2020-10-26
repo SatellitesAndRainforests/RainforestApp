@@ -1,8 +1,5 @@
 package com.markstart.rainforest.model;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.UUID;
@@ -29,30 +26,14 @@ public class Point implements Serializable {
         this.point_temperature = point_temperature;
     }
 
-    public JSONObject getJSONObject() {
-        JSONObject obj = new JSONObject();
-        try {
-            obj.put("point_id", point_id );
-            obj.put("track_id", track_id );
-            obj.put("gps_latitude", gps_latitude );
-            obj.put("gps_longitude", gps_longitude );
-            obj.put("point_timestamp",point_timestamp );
-            obj.put("point_humidity", point_humidity );
-            obj.put("point_temperature", point_temperature );
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        return obj;
-    }
 
-    public String getJsonTimestamp() {
+    public String createJsonTimestamp() {
+
         String extendedTime = point_timestamp.toString() + "+00:00";
         String converted = extendedTime.replace(' ', 'T');
 
         return converted;
     }
-
-
 
     public UUID getPoint_id() {
         return point_id;
@@ -109,5 +90,6 @@ public class Point implements Serializable {
     public void setPoint_temperature(float point_temperature) {
         this.point_temperature = point_temperature;
     }
+
 }
 

@@ -1,20 +1,17 @@
 package com.markstart.rainforest.dataStorage;
 
 import android.content.Context;
-import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
 import android.widget.Toast;
 
-import androidx.annotation.RequiresApi;
-
+import com.markstart.rainforest.MainActivity;
 import com.markstart.rainforest.model.Track;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -24,48 +21,70 @@ import java.util.ArrayList;
 public class DataStorageEngine {
 
     private File tracksDirectory;
+    private Context dseContext;
 
 
-   public DataStorageEngine() {
-        tracksDirectory = new File(Environment.getExternalStorageDirectory() + File.separator + "trackFiles");
+   public DataStorageEngine(Context context) {
 
-        boolean folderThere = true;
+       dseContext = context;
+
+       tracksDirectory = new File(Environment.getExternalStorageDirectory() + File.separator + "trackFiles");
+
         if (!tracksDirectory.exists()) {
-            folderThere = tracksDirectory.mkdir();
+            tracksDirectory.mkdir();
         } else {
-            Log.d("folder not created", "no no");
+            Log.d("DSE","DID NOT MAKE A FILE FOLDER *************");
         }
+
     }
 
 
 
-    public boolean saveTrackToFile(Context mcoContext, Track track, String fileName) {
+    public boolean saveTrackToFile(Track track, String fileName) {
 
         boolean writeSuccessful = false;
         FileOutputStream fs = null;
 
-        try {
-            fs = new FileOutputStream( new File(tracksDirectory + File.separator + fileName));
-            ObjectOutputStream oos = new ObjectOutputStream(fs);
-            oos.writeObject(track);
-            writeSuccessful = true;
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (fs != null) {
-                try {
-                    fs.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
+        if (trackHasAtLeastOnePoint(track)) {
+
+            try {
+                fs = new FileOutputStream(new File(tracksDirectory + File.separator + fileName));
+                ObjectOutputStream oos = new ObjectOutputStream(fs);
+                oos.writeObject(track);
+                writeSuccessful = true;
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                if (fs != null) {
+                    try {
+                        fs.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
+            return writeSuccessful;
+        } else {
+            return false;
         }
-        return writeSuccessful;
     }
 
-    public Track getTrackFromFile(Context mcoContext, String fileName) {
+
+    private boolean trackHasAtLeastOnePoint(Track track) {
+
+        if (track.getTrackPoints().size() > 0) {
+            return true;
+        } else {
+            Toast.makeText(dseContext, " Track needs > 0 Data Points ", Toast.LENGTH_LONG).show();
+            return false;
+        }
+
+    }
+
+
+    public Track getTrackFromFile( String fileName) {
 
         Track track = null;
         FileInputStream fs = null;
@@ -74,7 +93,6 @@ public class DataStorageEngine {
             fs = new FileInputStream(new File( tracksDirectory + File.separator + fileName));
             ObjectInputStream ois = new ObjectInputStream(fs);
             track = (Track) ois.readObject();
-            Log.d("read", "successful");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -86,34 +104,40 @@ public class DataStorageEngine {
     }
 
 
-    public void deleteAllTracks( Context context ) {
-        String[] fileList = allFilesList(context);
+    public void deleteAllTracks() {
+
         Boolean deletedFiles = false;
+        String[] fileList = allFilesList();
+
         for (String file : fileList) {
             File f = new File(tracksDirectory + File.separator + file);
             deletedFiles = f.delete();
         }
+
         if (!deletedFiles) {
-            Toast.makeText(context, " There are no files to delete. ", Toast.LENGTH_LONG).show();
+            Toast.makeText(dseContext, " There are no files to delete. ", Toast.LENGTH_LONG).show();
         } else {
-            Toast.makeText(context, " Files Deleted ", Toast.LENGTH_LONG).show();
+            Toast.makeText(dseContext, " Files Deleted ", Toast.LENGTH_LONG).show();
         }
+
     }
 
-    public ArrayList<Track> getAllTracksFromDisk( Context context ) {
 
-        ArrayList<Track> tracks = new ArrayList<Track>();
+    public ArrayList<Track> getAllTracksFromDisk() {
 
-        String [] fileList = allFilesList( context );
+        ArrayList<Track> tracks = new ArrayList<>();
+        String [] fileList = allFilesList();
 
         for (String file: fileList ) {
-               tracks.add(getTrackFromFile( context, file));
+               tracks.add(getTrackFromFile(file));
         }
+
         return tracks;
-    }
+
+   }
 
 
-    public String [] allFilesList(Context mcoContext) {
+    private String [] allFilesList() {
        File tracksDir = new File(String.valueOf(tracksDirectory));
        String [] fileList = tracksDir.list();
        return fileList;
@@ -122,8 +146,6 @@ public class DataStorageEngine {
 
 
 }
-
-
 
 
 
