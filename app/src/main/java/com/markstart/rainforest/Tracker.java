@@ -73,8 +73,8 @@ public class Tracker {
 
         // 5000 = 5 seconds. finalize software project requirements for sensor performance / timing  before programming.
         LocationRequest locationRequest = new LocationRequest();
-        locationRequest.setInterval(5000);    // 900000 is 15 minutes, good for prototype/ testing : )
-        locationRequest.setFastestInterval(5000);
+        locationRequest.setInterval(900000);    // 900000 is 15 minutes, good for prototype/ testing : )
+        locationRequest.setFastestInterval(900000);
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         return locationRequest;
 
