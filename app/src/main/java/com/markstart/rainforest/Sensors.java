@@ -6,6 +6,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.util.Log;
+import android.widget.Toast;
 
 
 public class Sensors implements SensorEventListener {
@@ -86,7 +87,6 @@ public class Sensors implements SensorEventListener {
     }
 
 
-
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
 
@@ -98,8 +98,6 @@ public class Sensors implements SensorEventListener {
             case Sensor.TYPE_RELATIVE_HUMIDITY:
 
                 currentHumidity = currentValue;
-
-                Log.d("sensor Hum", String.valueOf(currentHumidity));
 
                 MainActivity.mSensorHumidityTextView
                         .setText(sensorContext.getResources()

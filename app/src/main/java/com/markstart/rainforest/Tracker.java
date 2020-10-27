@@ -113,7 +113,6 @@ public class Tracker {
 
 
     protected void addNewDataPointToTrack( float humidity, float temperature ) {
-        
 
         getTrack().getTrackPoints().add( new Point(
                         UUID.randomUUID(),

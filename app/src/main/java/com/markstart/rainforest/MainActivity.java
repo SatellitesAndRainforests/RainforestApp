@@ -133,8 +133,10 @@ public class MainActivity extends AppCompatActivity {
             public void onLocationResult(LocationResult locationResult) {
 
                 tracker.setmLastLocation(locationResult.getLastLocation());
-                new Sensors(context, tracker);
+                new Sensors(context, tracker);      // starts a thread to catch the sensor values asynchronously and calls tracker to add a new Data Point
+                updateUI();
                 updateScreenDataValues();
+
             }
         };
 
@@ -165,6 +167,16 @@ public class MainActivity extends AppCompatActivity {
                         tracker.getmLastLocation().getLatitude(),
                         tracker.getmLastLocation().getLongitude(),
                         tracker.getmLastLocation().getTime()));
+
+    }
+
+
+    private void updateUI() {
+
+            int pointCount = tracker.getTrack().getTrackPoints().size();
+
+            showToast(" Data Point Saved !" );
+            messageHandler("Data Point: " +  pointCount  + " Saved");
 
     }
 
