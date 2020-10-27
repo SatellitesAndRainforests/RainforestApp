@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Build;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
@@ -72,8 +73,8 @@ public class Tracker {
 
         // 5000 = 5 seconds. finalize software project requirements for sensor performance / timing  before programming.
         LocationRequest locationRequest = new LocationRequest();
-        locationRequest.setInterval(900000);    // 900000 is 15 minutes, good for prototype/ testing : )
-        locationRequest.setFastestInterval(900000);
+        locationRequest.setInterval(5000);    // 900000 is 15 minutes, good for prototype/ testing : )
+        locationRequest.setFastestInterval(5000);
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         return locationRequest;
 
@@ -111,7 +112,8 @@ public class Tracker {
     }
 
 
-    protected void addNewDataPointToTrack( Sensors sensors ) {
+    protected void addNewDataPointToTrack( float humidity, float temperature ) {
+        
 
         getTrack().getTrackPoints().add( new Point(
                         UUID.randomUUID(),
@@ -119,8 +121,8 @@ public class Tracker {
                         (float) getmLastLocation().getLatitude(),
                         (float) getmLastLocation().getLongitude(),
                         new Timestamp( getmLastLocation().getTime()),
-                        sensors.getCurrentHumidity(),
-                        sensors.getCurrentTemperature())
+                        humidity,
+                        temperature)
                 );
 
     }

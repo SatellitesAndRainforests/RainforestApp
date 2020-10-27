@@ -133,7 +133,7 @@ public class MainActivity extends AppCompatActivity {
             public void onLocationResult(LocationResult locationResult) {
 
                 tracker.setmLastLocation(locationResult.getLastLocation());
-                tracker.addNewDataPointToTrack( new Sensors(context) );
+                new Sensors(context, tracker);
                 updateScreenDataValues();
             }
         };

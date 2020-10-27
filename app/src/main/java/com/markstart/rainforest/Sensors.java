@@ -5,6 +5,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.util.Log;
 
 
 public class Sensors implements SensorEventListener {
@@ -18,11 +19,13 @@ public class Sensors implements SensorEventListener {
     private float currentHumidity;
     private float currentTemperature;
     private Context sensorContext;
+    private Tracker sensorTracker;
 
 
-    public Sensors(Context context) {
+    public Sensors(Context context, Tracker tracker) {
 
         sensorContext = context;
+        sensorTracker = tracker;
 
         mSensorManager = (SensorManager) context.getSystemService(context.SENSOR_SERVICE);
 
@@ -48,12 +51,13 @@ public class Sensors implements SensorEventListener {
 
             startSensors();
 
-            while (!haveSensorReadings) {
+            while (haveSensorReadings == false) {
                 if (haveTemperatureReading && haveHumidityReading) {
                     haveSensorReadings = true;
                 }
             }
 
+            sensorTracker.addNewDataPointToTrack(currentHumidity, currentTemperature);
             stopSensors();
             return;
         }
@@ -93,23 +97,29 @@ public class Sensors implements SensorEventListener {
 
             case Sensor.TYPE_RELATIVE_HUMIDITY:
 
+                currentHumidity = currentValue;
+
+                Log.d("sensor Hum", String.valueOf(currentHumidity));
+
                 MainActivity.mSensorHumidityTextView
                         .setText(sensorContext.getResources()
                                 .getString(R.string.humidity_sensor_text, currentValue));
 
                 haveHumidityReading = true;
-                currentHumidity = currentValue;
+
+
 
                 break;
 
             case Sensor.TYPE_AMBIENT_TEMPERATURE:
+
+                currentTemperature = currentValue;
 
                 MainActivity.mSensorTemperatureTextView
                         .setText(sensorContext.getResources()
                                 .getString(R.string.temperature_sensor_text, currentValue));
 
                 haveTemperatureReading = true;
-                currentTemperature = currentValue;
 
                 break;
 

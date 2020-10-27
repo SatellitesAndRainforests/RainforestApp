@@ -68,7 +68,10 @@ public class TrackClient {
             json.put("gps_longitude", point.getGps_longitude());
             json.put("point_timestamp", point.createJsonTimestamp());
             json.put("point_humidity", point.getPoint_humidity());
+            Log.d("client H", String.valueOf(point.getPoint_humidity()));
             json.put("point_temperature", point.getPoint_temperature());
+            Log.d("client T", String.valueOf(point.getPoint_temperature()));
+
 
             se = new StringEntity(json.toString());
 
